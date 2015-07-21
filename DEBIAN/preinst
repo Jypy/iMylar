@@ -1,0 +1,25 @@
+#!/bin/sh
+
+folder_app="/Applications/iMylar.app/"
+folder_data="/var/mobile/Documents/JypyzProducts/iMylar/"
+
+echo
+
+if [ -f ${folder_data}mylar.db ] ;then
+	echo Data OK!
+else
+	mkdir -p $folder_data 
+	
+	if [ -f ${folder_app}mylar.db ] ;then
+		echo Moving data...
+		mv ${folder_app}cache ${folder_data}
+		mv ${folder_app}logs ${folder_data}
+		mv ${folder_app}mylar.db ${folder_data}
+	else
+		echo Fresh install!
+	fi
+fi
+
+echo
+echo Pre-flight Done!
+echo

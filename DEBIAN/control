@@ -1,0 +1,14 @@
+Package: eu.jypy.imylar
+Version: 0.20150111
+Section: Jypyz.Products.iMYLAR
+Priority: standard
+Installed-Size: 
+Maintainer: Jean-Philippe Bouillot (Jypy) <jypyzproducts@jypy.eu>
+Pre-Depends: firmware (>= 3.0)
+Depends: eu.jypy.iconpack, python
+Architecture: iphoneos-arm
+Name: iMylar
+Author: Jean-Philippe Bouillot (Jypy) <jypyzproducts@jypy.eu>
+Depiction: http://jypy.eu/products/iMYLAR_main.html
+Description: Mylar is an automated Comic Book (cbr/cbz) downloader program for iDevices
+Sponsor: Jypy.eu <http://jypy.eu>

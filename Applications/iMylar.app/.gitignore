@@ -1,0 +1,6 @@
+mylar.db
+config.ini
+*.pyc
+.idea
+logs
+.AppleDouble
