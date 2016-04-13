@@ -35,7 +35,7 @@ import datetime
 class FailedProcessor(object):
     """ Handles Failed downloads that are passed from SABnzbd thus far """
 
-    def __init__(self, nzb_name=None, nzb_folder=None, id=None, issueid=None, comicid=None, prov=None, queue=None):
+    def __init__(self, nzb_name=None, nzb_folder=None, id=None, issueid=None, comicid=None, prov=None, queue=None, oneoffinfo=None):
         """
         nzb_name : Full name of the nzb file that has returned as a fail.
         nzb_folder: Full path to the folder of the failed download.
@@ -47,8 +47,20 @@ class FailedProcessor(object):
         self.log = ""
 
         self.id = id
-        if issueid: self.issueid = issueid
-        if comicid: self.comicid = comicid
+        if issueid:
+            self.issueid = issueid
+        else:
+            self.issueid = None
+        if comicid:
+            self.comicid = comicid
+        else:
+            self.comicid = None
+
+        if oneoffinfo:
+            self.oneoffinfo = oneoffinfo
+        else:
+            self.oneoffinfo = None
+
         self.prov = prov
         if queue: self.queue = queue
         self.valreturn = []
@@ -66,7 +78,7 @@ class FailedProcessor(object):
         module = '[FAILED-DOWNLOAD]'
 
         myDB = db.DBConnection()
-        
+
         if self.nzb_name and self.nzb_folder:
             self._log('Failed download has been detected: ' + self.nzb_name + ' in ' + self.nzb_folder)
 
@@ -85,8 +97,9 @@ class FailedProcessor(object):
 
             #replace spaces
             nzbname = re.sub(' ', '.', str(nzbname))
-            nzbname = re.sub('[\,\:\?]', '', str(nzbname))
+            nzbname = re.sub('[\,\:\?\'\(\)]', '', str(nzbname))
             nzbname = re.sub('[\&]', 'and', str(nzbname))
+            nzbname = re.sub('_', '.', str(nzbname))
 
             logger.fdebug(module + ' After conversions, nzbname is : ' + str(nzbname))
             self._log("nzbname: " + str(nzbname))
@@ -104,8 +117,8 @@ class FailedProcessor(object):
                 if nzbiss is None:
                     logger.error(module + ' Unable to locate downloaded file to rename. PostProcessing aborted.')
                     self._log('Unable to locate downloaded file to rename. PostProcessing aborted.')
-                    self.valreturn.append({"self.log" : self.log,
-                                           "mode"     : 'stop'})
+                    self.valreturn.append({"self.log": self.log,
+                                           "mode": 'stop'})
 
                     return self.queue.put(self.valreturn)
                 else:
@@ -123,9 +136,9 @@ class FailedProcessor(object):
             nzbiss = myDB.selectone("SELECT * from nzblog WHERE IssueID=?", [issueid]).fetchone()
             if nzbiss is None:
                 logger.info(module + ' Cannot locate corresponding record in download history. This will be implemented soon.')
-                self.valreturn.append({"self.log" : self.log,
-                                       "mode"     : 'stop'})
-                return self.queue.put(self.valreturn)                
+                self.valreturn.append({"self.log": self.log,
+                                       "mode": 'stop'})
+                return self.queue.put(self.valreturn)
 
             nzbname = nzbiss['NZBName']
 
@@ -144,7 +157,7 @@ class FailedProcessor(object):
             issuenzb = myDB.selectone("SELECT * from annuals WHERE IssueID=? AND ComicName NOT NULL", [issueid]).fetchone()
         else:
             issuenzb = myDB.selectone("SELECT * from issues WHERE IssueID=? AND ComicName NOT NULL", [issueid]).fetchone()
-        
+
         if issuenzb is not None:
             logger.info(module + ' issuenzb found.')
             if helpers.is_number(issueid):
@@ -164,8 +177,8 @@ class FailedProcessor(object):
         else:
             logger.info('Failed download handling for story-arcs and one-off\'s are not supported yet. Be patient!')
             self._log(' Unable to locate downloaded file to rename. PostProcessing aborted.')
-            self.valreturn.append({"self.log" : self.log,
-                                   "mode"     : 'stop'})
+            self.valreturn.append({"self.log": self.log,
+                                   "mode": 'stop'})
 
             return self.queue.put(self.valreturn)
 
@@ -186,7 +199,10 @@ class FailedProcessor(object):
                    "NZBName":  nzbname}
         Vals = {"Status":       'Failed',
                 "ComicName":    issuenzb['ComicName'],
-                "Issue_Number": issuenzb['Issue_Number']}
+                "Issue_Number": issuenzb['Issue_Number'],
+                "IssueID":      issueid,
+                "ComicID":      comicid,
+                "DateFailed":   helpers.now()}
         myDB.upsert("failed", Vals, ctrlVal)
 
         logger.info(module + ' Successfully marked as Failed.')
@@ -207,32 +223,40 @@ class FailedProcessor(object):
         else:
             logger.info(module + ' Stopping search here as automatic handling of failed downloads is not enabled *hint*')
             self._log('Stopping search here as automatic handling of failed downloads is not enabled *hint*')
-            self.valreturn.append({"self.log" : self.log,
-                                   "mode"     : 'stop'})
+            self.valreturn.append({"self.log": self.log,
+                                   "mode": 'stop'})
             return self.queue.put(self.valreturn)
 
 
     def failed_check(self):
         #issueid = self.issueid
-        #comicid = self.comicid    
-           
+        #comicid = self.comicid
+
         # ID = ID passed by search upon a match upon preparing to send it to client to download.
         #     ID is provider dependent, so the same file should be different for every provider.
         module = '[FAILED_DOWNLOAD_CHECKER]'
-    
+
         myDB = db.DBConnection()
         # Querying on NZBName alone will result in all downloads regardless of provider.
         # This will make sure that the files being downloaded are different regardless of provider.
-        # Perhaps later improvement might be to break it down by provider so that Mylar will attempt to 
+        # Perhaps later improvement might be to break it down by provider so that Mylar will attempt to
         # download same issues on different providers (albeit it shouldn't matter, if it's broke it's broke).
         logger.info('prov  : ' + str(self.prov) + '[' + str(self.id) + ']')
-        chk_fail = myDB.selectone('SELECT * FROM failed WHERE ID=?', [self.id]).fetchone()
+        # if this is from nzbhydra, we need to rejig the id line so that the searchid is removed since it's always unique to the search.
+        if 'indexerguid' in self.id:
+            st = self.id.find('searchid:')
+            end = self.id.find(',',st)
+            self.id = '%' + self.id[:st] + '%' + self.id[end+1:len(self.id)-1] + '%'
+            chk_fail = myDB.selectone('SELECT * FROM failed WHERE ID LIKE ?', [self.id]).fetchone()
+        else:
+            chk_fail = myDB.selectone('SELECT * FROM failed WHERE ID=?', [self.id]).fetchone()
+
         if chk_fail is None:
             logger.info(module + ' Successfully marked this download as Good for downloadable content')
             return 'Good'
         else:
             if chk_fail['status'] == 'Good':
-                logger.info(module + ' result has a status of GOOD - which means it does not currently exist in the failed download list.') 
+                logger.info(module + ' result has a status of GOOD - which means it does not currently exist in the failed download list.')
                 return chk_fail['status']
             elif chk_fail['status'] == 'Failed':
                 logger.info(module + ' result has a status of FAIL which indicates it is not a good choice to download.')
@@ -262,25 +286,34 @@ class FailedProcessor(object):
         logger.fdebug(module + 'nzb_id: ' + str(self.id))
         logger.fdebug(module + 'prov: ' + self.prov)
 
-        if 'annual' in self.nzb_name.lower():
-            logger.info(module + ' Annual detected.')
-            annchk = "yes"
-            issuenzb = myDB.selectone("SELECT * from annuals WHERE IssueID=? AND ComicName NOT NULL", [self.issueid]).fetchone()
+        logger.fdebug('oneoffinfo: ' + str(self.oneoffinfo))
+        if self.oneoffinfo:
+            ComicName = self.oneoffinfo['ComicName']
+            IssueNumber = self.oneoffinfo['IssueNumber']
+
         else:
-            issuenzb = myDB.selectone("SELECT * from issues WHERE IssueID=? AND ComicName NOT NULL", [self.issueid]).fetchone()
+            if 'annual' in self.nzb_name.lower():
+                logger.info(module + ' Annual detected.')
+                annchk = "yes"
+                issuenzb = myDB.selectone("SELECT * from annuals WHERE IssueID=? AND ComicName NOT NULL", [self.issueid]).fetchone()
+            else:
+                issuenzb = myDB.selectone("SELECT * from issues WHERE IssueID=? AND ComicName NOT NULL", [self.issueid]).fetchone()
 
-
-        ctrlVal = {"IssueID": self.issueid}
-        Vals = {"Status":    'Failed'}
-        myDB.upsert("issues", Vals, ctrlVal)
+            ctrlVal = {"IssueID": self.issueid}
+            Vals = {"Status":    'Failed'}
+            myDB.upsert("issues", Vals, ctrlVal)
+            ComicName = issuenzb['ComicName']
+            IssueNumber = issuenzb['Issue_Number']
 
         ctrlVal = {"ID":       self.id,
                    "Provider": self.prov,
                    "NZBName":  self.nzb_name}
         Vals = {"Status":       'Failed',
-                "ComicName":    issuenzb['ComicName'],
-                "Issue_Number": issuenzb['Issue_Number']}
+                "ComicName":    ComicName,
+                "Issue_Number": IssueNumber,
+                "IssueID":      self.issueid,
+                "ComicID":      self.comicid,
+                "DateFailed":   helpers.now()}
         myDB.upsert("failed", Vals, ctrlVal)
 
         logger.info(module + ' Successfully marked as Failed.')
-        

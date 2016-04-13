@@ -43,7 +43,7 @@ class Scheduler:
         self.delay = delay
 
         self.initThread()
- 
+
         self.abort = False
 
     def initThread(self):
@@ -72,12 +72,12 @@ class Scheduler:
                         logger.fdebug("Starting new thread: " + self.threadName)
 
                     if self.delay:
-                        logger.info('delaying startup thread for ' + str(self.delay) + ' seconds to avoid locks.')
+                        logger.info('delaying thread for ' + str(self.delay) + ' seconds to avoid locks.')
                         time.sleep(self.delay)
 
                     self.action.run()
                 except Exception, e:
-                    logger.fdebug("Exception generated in thread " + self.threadName + ": %s" % e )
+                    logger.fdebug("Exception generated in thread " + self.threadName + ": %s" % e)
                     logger.fdebug(repr(traceback.format_exc()))
 
             if self.abort:

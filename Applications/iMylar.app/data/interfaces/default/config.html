@@ -54,9 +54,10 @@
                          <div align="center">
                             <label><strong>Mylar is free to use,</br>
                             but you can contribute and support the development</br>
-                            by giving a donation</strong></label></br></br>
+                            by buying me a coffee (or several)</strong></label></br></br>
                          </div>
-                         <div style="width: 55%; margin: 0px auto;">
+                         <div style="width: 60%; margin: 0px auto;">
+                            <a id="navDonate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=EWQADB5AMVRFU" rel="noreferrer" onclick="window.open('http://dereferer.org/?' + this.href); return false;"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" alt="[donate]" /></a>
                             <a href="https://flattr.com/submit/auto?user_id=evilhero&url=https://github.com/evilhero/mylar&title=Mylar%20Donation%description=Supporting&20the%development%20of%20Mylar&language=en_CA&hidden=1&category=software" target="_blank">
                                <img src="//api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" align="center">
                             </a>
@@ -120,9 +121,27 @@
 	            		   <input type="text" name="http_host" value="${config['http_host']}" size="30">
 	            		   <small>e.g. localhost or 0.0.0.0</small>
 	            		</div> 
+                                <div class="row">
+                                    <label>HTTP Port</label>
+                                    <input type="text" name="http_port" value="${config['http_port']}" size="10">
+                                <div>
 	            		<div class="row">
-	            		      <label>HTTP Port</label>
-	            		      <input type="text" name="http_port" value="${config['http_port']}" size="10">
+                                    <div class="row checkbox">
+                                        <input type="checkbox" name="enable_https" id="enable_https" value="1" ${config['enable_https']} />
+                                        <label title="Enable HTTPS for web server for encrypted communication">
+                                            Enable HTTPS
+                                        </label>
+                                    </div>
+                                    <div id="https_options">
+                                        <div class="row">
+                                             <label>HTTPS Cert</label>
+                                             <input type="text" title="the FULL path to the certificate" name="https_cert" value="${config['https_cert']}" size="30">
+                                        </div>
+                                        <div class="row">
+                                             <label>HTTPS Key</label>
+                                             <input type="text" title="the FULL path to the key" name="https_key" value="${config['https_key']}" size="30">
+                                        </div>
+                                     </div>
 	            		 </div>
 	            		 <div class="row">
 	            		     <label>HTTP Username</label>
@@ -136,20 +155,17 @@
                                  <div class="row checkbox">
                                     <input type="checkbox" name="launch_browser" value="1" ${config['launch_browser']} /> <label>Launch Browser on Startup</label>
                                  </div>
-<!--
-                                 <div class="row checkbox">
-                                    <input type="checkbox" name="logverbose" value="2" ${config['logverbose']} /> <label>Verbose Logging</label>
-                                    <br/><small>*Use this only when experiencing problems*</small>
-                                 </div>
--->
+
                                  <div class="row checkbox">
                                     <input type="checkbox" name="syno_fix" value="1" ${config['syno_fix']} /> <label>Synology Fix</label>
                                     <br/><small>*Use this if experiencing parsing problems*</small>
                                  </div>
+<!--
                                  <div class="row checkbox">
-                                    <input type="checkbox" name="cvapifix" value="1" ${config['cvapifix']} /> <label>Comicvine URL Fix</label>
-                                    <br/><small>*Use this if CV's URL has changed*</small>
+                                    <input type="checkbox" name="auto_update" value="1" ${config['auto_update']} /> <label>Automatic Updates</label>
+                                    <br/><small>Install new updates with no intervention</small>
                                  </div>
+-->
             		 </fieldset>
                          <fieldset>
                              <legend>Annual Handling</legend>
@@ -198,10 +214,6 @@
                                       <input type="text" name="search_delay" value="${config['search_delay']}" size="4" />mins
                                   </div>
                             </div>
-
-	                    <div class="row">
-	                    	<label>Library Scan Interval</label>
-	                    	<input type="text" name="libraryscan_interval" value="${config['libraryscan_interval']}" size="4">mins
 	                    </div>
                                <legend>Comic Location</legend>
                                 <div>
@@ -222,8 +234,20 @@
                                 <div class="row">
                                     <label>File CHMOD</label>
                                     <input type="text" name="chmod_file" value="${config['chmod_file']}" size="50">
-                                    <small>Permissions on created/moved directories</small>
+                                    <small>Permissions on created/moved files</small>
                                 </div>
+                                %if 'windows' not in mylar.OS_DETECT:
+                                    <div class="row">
+                                        <label>Owner</label>
+                                        <input type="text" name="chowner" value="${config['chowner']}" size="50">
+                                        <small>Set Ownership of files/directories (name OR uid)</small>
+                                    </div>
+                                    <div class="row">
+                                        <label>Group</label>
+                                        <input type="text" name="chgroup" value="${config['chgroup']}" size="50">
+                                        <small>Set Group Ownership of files/directories (name OR gid)</small>
+                                    </div>
+                                %endif 
 
 	                </fieldset>
                 </td>
@@ -263,11 +287,6 @@
                                      <a href="#" style="float:right" type="button" id="find_sabapi" data-success="Sucessfully retrieved SABnzbd API" data-error="Error auto-populating SABnzbd API"><span class="ui-icon ui-icon-extlink"></span>Get API</a>
                                      </div>
                                 </div>
-                                <div class="row">
-                                    <label>SABnzbd Download Directory</label>
-                                    <input type="text" name="sab_directory" value="${config['sab_directory']}" size="36" />
-                                    <small>Where your SAB downloads go... (optional)</small>
-                                </div>
 
 	                        <div class="row">
 	                        <label>SABnzbd Category:</label>
@@ -287,6 +306,19 @@
                                                 %endfor
                                                 </select>
                                 </div>
+
+                                <div class="row checkbox left clearfix">
+                                    <input id="sab_to_mylar" type="checkbox" onclick="initConfigCheckbox($(this));" name="sab_to_mylar" value="1" ${config['sab_to_mylar']} /><label>Are Mylar / SABnzbd on separate machines</label>
+                                    <small class="heading"><span style="float: left; margin-right: .3em; margin-top: 4px;" class="ui-icon ui-icon-info"></span>This is *ONLY* required if Mylar and SABnzbd are on separate machines, otherwise don't touch it</small>
+                                </div>
+                                <div class="config">
+                                    <div class="row">
+                                        <label>SABnzbd Download Directory</label>
+                                        <input type="text" name="sab_directory" value="${config['sab_directory']}" size="36" />
+                                        <small>Where your SAB downloads go (required for PP)</small>
+                                    </div>
+                                </div>
+
 <!--
                                 <div class="row">
                                      <a href="#" style="float:right" type="button" onclick="doAjaxCall('addAction();SABtest',$(this))" data-success="Sucessfully tested SABnzbd connection" data-error="Error testing SABnzbd connection"><span class="ui-icon ui-icon-extlink"></span>Test SABnzbd</a>
@@ -425,6 +457,9 @@
                                     <input id="usenzbsu" type="checkbox" onclick="initConfigCheckbox($(this));" name="nzbsu" value="1" ${config['use_nzbsu']} /><legend>NZB.SU</legend>
                 		</div>
                 		<div class="config">
+                                        <div class="row checkbox">
+                                            <input type="checkbox" name="nzbsu_verify" value="1" ${config['nzbsu_verify']} /><label>Verify SSL</label>
+                                        </div>
                                         <div class="row">
                                             <label>NZB.SU UID</label>
                                             <input type="text" name="nzbsu_uid" value="${config['nzbsu_uid']}" size="15" >
@@ -442,10 +477,8 @@
                                      <input id="usedognzb" type="checkbox" onclick="initConfigCheckbox($(this));" name="dognzb" value="1" ${config['use_dognzb']} /><legend>DOGNZB</legend>
                                 </div>
                                 <div class="config">
-                                        <div class="row">
-                                            <label>DOGNZB UID</label>
-                                            <input type="text" name="dognzb_uid" value="${config['dognzb_uid']}" size="15">
-                                            <small>( only needed for RSS feed )</small>
+                                        <div class="row checkbox">
+                                             <input id="dognzb_verify" type="checkbox" name="dognzb_verify" value="1" ${config['dognzb_verify']} /><label>Verify SSL</label>
                                         </div>
                                         <div class="row">
                                                 <label>DOGNZB API</label>
@@ -473,13 +506,65 @@
                                                 <input id="enable_kat" type="checkbox" name="enable_kat" value=1 ${config['enable_kat']} /><label>Enable KAT</label>
                                          </div>
                                          <div class="row checkbox left clearfix">
-                                                <input id="enable_cbt" type="checkbox" onclick="initConfigCheckbox($(this));" name="enable_cbt" value=1 ${config['enable_cbt']} /><label>Enable CBT</label>
+                                                <input type="checkbox" id="enable_32p" onclick="initConfigCheckbox($(this));" name="enable_32p" value=1 ${config['enable_32p']} /><label>Enable 32P</label>
+                                                <div align="left">
+                                                  <small class="heading"><span style="float: left; margin-left: .3em; margin-top: 4px;" class="ui-icon ui-icon-info"></span>python 2.7.9 required for 32P usage</small>
+                                                </div>
                                          </div>
-                                         <div class="config">                                           
-                                                <label>&nbspPasskey</label>
-                                                <input type="text" name="cbt_passkey" value="${config['cbt_passkey']}" size="36">
+                                         <div class="config"> 
+                                             <fieldset>
+                                                <div align="center">
+                                                    <input type="radio" name="mode_32p" id="legacymode_32p" value="0" ${config['legacymode_32p']}> Legacy Mode <input type="radio" name="mode_32p" id="authmode_32p" value="1" ${config['authmode_32p']}> Auth Mode
+                                                </div>
+                                             </fieldset>
+                                             <fieldset id="legacy32p_options">
+                                                <div class="row">
+                                                   <label>&nbspPasskey</label>
+                                                   <input type="text" name="passkey_32p" value="${config['passkey_32p']}" size="36">
+                                                </div>
+                                                <div class="row">
+                                                   <label>&nbspRSS feed</label>
+                                                   <input type="text" name="rssfeed_32p" value="${config['rssfeed_32p']}" size="36">
+                                                   <small>( enter in the full url for any CURRENT 32P RSS feed )</small>
+                                                   <small>( Currently will only montior NEW releases feed )</small>
+                                                </div>
+                                             </fieldset>
+                                             <fieldset id="auth32p_options">
+                                                <div align="center">
+                                                  <small class="heading">do NOT use a VPN with this option</small>
+                                                </div>
+                                                <div class="row">
+                                                    <label>&nbspUserName</label>
+                                                    <input type="text" name="username_32p" value="${config['username_32p']}" size="36">
+                                                </div>
+                                                <div class="row">
+                                                    <label>&nbspPassword</label>
+                                                    <input type="password" name="password_32p" value="${config['password_32p']}" size="36">
+                                                    <small>( monitor the NEW releases feed & your personal notifications )</small>
+                                                </div>
+                                             </fieldset>
                                          </div>
+                                         <div class="row checkbox left clearfix">
+                                                <input type="checkbox" id="enable_torznab" onclick="initConfigCheckbox($(this));" name="enable_torznab" value=1 ${config['enable_torznab']} /><label>Enable Torznab</label>
                                          </div>
+                                         <div class="config">
+                                            <div class="row">
+                                                <label>Torznab Name</label>
+                                                <input type="text" name="torznab_name" value="${config['torznab_name']}" size="30">
+                                            </div>
+                                            <div class="row">
+                                                <label>Torznab Host</label>
+                                                <input type="text" name="torznab_host" value="${config['torznab_host']}" size="30">
+                                            </div>
+                                            <div class="row">
+                                                <label>Torznab API</label>
+                                                <input type="text" name="torznab_apikey" value="${config['torznab_apikey']}" size="36">
+                                            </div>
+                                            <div class="row">
+                                                <label>Torznab Category</label>
+                                                <input type="text" name="torznab_category" value="${config['torznab_category']}" size="12">
+                                            </div>
+                                        </div>
                                 </div>
                         </fieldset>
 
@@ -497,10 +582,15 @@
                                     %>
                                     %for newznab in config['extra_newznabs']:
                                         <%
-                                            if newznab[4] == '1' or newznab[4] == 1:
+                                            if newznab[5] == '1' or newznab[5] == 1:
                                                 newznab_enabled = "checked"
                                             else:
                                                 newznab_enabled = ""
+
+                                            if newznab[2] == '1' or newznab[2] == 1:
+                                                newznab_verify = "checked"
+                                            else:
+                                                newznab_verify = ""
                                         %>
                                         <div class="config" id="newznab${newznab_number}">
                                             <div class="row">
@@ -511,13 +601,16 @@
                                                 <label>Newznab Host</label>
                                                 <input type="text" name="newznab_host${newznab_number}" value="${newznab[1]}" size="30">
                                             </div>
+                                            <div class="row checkbox">
+                                                <input id="newznab_verify" type="checkbox" name="newznab_verify${newznab_number}" value="1" ${newznab_verify} /><label>Verify SSL</label>
+                                            </div>
                                             <div class="row">
                                                 <label>Newznab API</label>
-                                                <input type="text" name="newznab_api${newznab_number}" value="${newznab[2]}" size="36">
+                                                <input type="text" name="newznab_api${newznab_number}" value="${newznab[3]}" size="36">
                                             </div>
                                             <div class="row">
                                                 <label>Newznab UID</label>
-                                                <input type="text" name="newznab_uid${newznab_number}" value="${newznab[3]}" size="15">
+                                                <input type="text" name="newznab_uid${newznab_number}" value="${newznab[4]}" size="15">
                                                 <small>( only needed for RSS feed )</small>
                                             </div>
                                             <div class="row checkbox">
@@ -581,7 +674,7 @@
                                 </div>
                                 <div class="config">
                                        <div class="row">
-             <input type="text" name="minsize" value="${config['minsize']}" size="6">
+                                           <input type="text" name="minsize" value="${config['minsize']}" size="6">
                                        </div>
                                 </div>
                                 </div>
@@ -598,10 +691,32 @@
                         </fieldset>
                         <fieldset>
                              <legend>Duplicate Handling</legend>
+                             <div class="row">
+                                 <label>Retain based on</label>
+                                 <select name="dupeconstraint">
+                                  %for x in ['filesize', 'filetype-cbr', 'filetype-cbz']:
+                                         <%
+                                                if config['dupeconstraint'] == x:
+                                                    outputselect = 'selected'
+                                                else:
+                                                    outputselect = ''
+                                          %>
+                                          <option value=${x} ${outputselect}>${x}</option>
+                                  %endfor
+                                 </select>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Duplicate Dump Folder</legend>
                              <div class="row checkbox left clearfix">
-                             
+                                 <input type="checkbox" id="enable_ddump" onclick="initConfigCheckbox($this));" name="ddump" value="1" ${config['ddump']} /><label>Enable Duplicate Dump Folder</label>
                              </div>
-
+                                <div class="config">
+                                    <div class="row"">
+                                       <label>Full path to move files determined to be duplicates</label>
+                                       <input type="text" name="duplicate_dump" value="${config['duplicate_dump']}" size="30">
+                                    </div>
+                                </div>
                         </fieldset>
                         <fieldset>
                              <legend>Failed Download Handling</legend>
@@ -609,10 +724,10 @@
                                  <input type="checkbox" id="enable_failed" onclick="initConfigCheckbox($this));" name="failed_download_handling" value="1" ${config['failed_download_handling']} /><label>Enable Failed Download Handling</label>
                              </div>
                                 <div class="config">
-                                    <div class="row checkbox left clearfix">
+                                    <div class="checkbox left clearfix">
                                        <input type="checkbox" name="failed_auto" value="1" ${config['failed_auto']} /><label>Enable Automatic-Retry for Failed Downloads</label>
                                     </div>
-
+                                </div>
                         </fieldset>
 
                	</td>
@@ -623,6 +738,21 @@
                                      <input type="checkbox" id="post_processing" onclick="initConfigCheckbox($this));" name="post_processing" value="1" ${config['post_processing']} /><label>Enable Post-Processing<small> (not checked = NO post-processing/post-management)</small></label>
                                 </div>
                                 <div class="config">
+                                    <div class="row left">
+                                        <label>When Post-Processing
+                                        <select name="file_opts">
+                                         %for x in ['move', 'copy']:
+                                             <%
+                                                    if config['file_opts'] == x:
+                                                        outputselect = 'selected'
+                                                    else:
+                                                        outputselect = ''
+                                              %>
+                                              <option value=${x} ${outputselect}>${x}</option>
+                                         %endfor
+                                        </select> the files</label>
+                                    </div>
+                                    <br/>
                                     <div class="row checkbox left clearfix">
                                         <input type="checkbox" id="enable_check_folder" onclick="initConfigCheckbox($this));" name="enable_check_folder" value="1" ${config['enable_check_folder']} /><label>Enable Folder Monitoring<small></label>
                                     </div>
@@ -662,29 +792,36 @@
                                 </div>                           
                 	</fieldset>
                         <fieldset>
-                                <legend>Metadata Tagging</legend><small class="heading"><span style="float: left; margin-right: .3em; margin-top: 4px;" class="ui-icon ui-icon-info"></span>ComicTagger and configparser are required</small>
+                                <legend>Metadata Tagging</legend><small class="heading"><span style="float: left; margin-right: .3em; margin-top: 4px;" class="ui-icon ui-icon-info"></span>ComicTagger is included but configparser is required</small>
                                 <div class="row checkbox left clearfix">
                                      <input id="enable_meta" type="checkbox" onclick="initConfigCheckbox($this));" name="enable_meta" value="1" ${config['enable_meta']} /><label>Enable Metadata Tagging</label>
                                 </div>
                                 <div class="config">
+<!---                                    
                                         <div class="row">
                                                 <label>ComicTagger Path</label>
                                                 <input type="text" name="cmtagger_path" value="${config['cmtagger_path']}" size="30" />
                                                 <small>If left blank, will assume it's in root of mylar</small>
                                         </div>
+--->
                                         <div class="row checkbox left clearfix">
-                                                <input type="checkbox" name="ct_tag_cr" value="1" ${config['ct_tag_cr']} /><label>Write ComicRack (cr) tags (ComicInfo.xml)</label>
+                                                <input id="cbr2cbz" type="checkbox" name="cbr2cbz_only" value="1" ${config['cbr2cbz_only']} /><label>Convert CBR to CBZ ONLY</label>
                                         </div>
-                                        <div class="row checkbox left clearfix">
-                                                <input type="checkbox" name="ct_tag_cbl" value="1" ${config['ct_tag_cbl']} /><label>Write ComicBookLover (Cbl) tags (zip comment)</label>
-                                        </div>
-                                        <div class="row checkbox left clearfix">
-                                                <input type="checkbox" name="ct_cbz_overwrite" value="1" ${config['ct_cbz_overwrite']} /><label>Overwrite existing cbz tags (if they exist)</label>
-                                        </div>
+                                        <div id="metataggingoptions">
+                                            <div class="row checkbox left clearfix">
+                                                    <input type="checkbox" name="ct_tag_cr" value="1" ${config['ct_tag_cr']} /><label>Write ComicRack (cr) tags (ComicInfo.xml)</label>
+                                            </div>
+                                            <div class="row checkbox left clearfix">
+                                                    <input type="checkbox" name="ct_tag_cbl" value="1" ${config['ct_tag_cbl']} /><label>Write ComicBookLover (Cbl) tags (zip comment)</label>
+                                            </div>
+                                            <div class="row checkbox left clearfix">
+                                                    <input type="checkbox" name="ct_cbz_overwrite" value="1" ${config['ct_cbz_overwrite']} /><label>Overwrite existing cbz tags (if they exist)</label>
+                                            </div>
 
-                                        <div>
-                                           <small><center>If ComicVine API Key specified, will use with ComicTagger</center></small>
-                                           <small><center>Writing each type of metadata will increase API count respectively</center></small>
+                                            <div>
+                                               <small><center>If ComicVine API Key specified, will use with ComicTagger</center></small>
+                                               <small><center>Writing each type of metadata will increase API count respectively</center></small>
+                                            </div>
                                         </div>
                                 </div>
                         </fieldset>
@@ -821,13 +958,16 @@
                                                      <div class="row">
                                                          <label>API key</label><input type="text" name="prowl_keys" value="${config['prowl_keys']}" size="50">
                                                      </div>
-                                                        <div class="row checkbox">
-                                                             <input type="checkbox" name="prowl_onsnatch" value="1" ${config['prowl_onsnatch']} /><label>Notify on snatch?</label>
-                                                        </div>
-                                                        <div class="row">
-                                                                <label>Priority (-2,-1,0,1 or 2):</label>
-                                                                   <input type="text" name="prowl_priority" value="${config['prowl_priority']}" size="2">
-                                                        </div>
+                                                     <div class="row checkbox">
+                                                         <input type="checkbox" name="prowl_onsnatch" value="1" ${config['prowl_onsnatch']} /><label>Notify on snatch?</label>
+                                                     </div>
+                                                     <div class="row">
+                                                         <label>Priority (-2,-1,0,1 or 2):</label>
+                                                         <input type="text" name="prowl_priority" value="${config['prowl_priority']}" size="2">
+                                                     </div>
+                                                     <div class="row">
+                                                         <input type="button" value="Test PROWL" id="prowl_test" />
+                                                     </div>
                                                  </div>
                                         </fieldset>
                      <fieldset>
@@ -845,8 +985,8 @@
                                     <small>Separate multiple api keys with commas</small>
                             </div>
                             <div class="row">
-                            <label>Priority</label>
-                            <select name="nma_priority">
+                                <label>Priority</label>
+                                <select name="nma_priority">
                                         %for x in [-2,-1,0,1,2]:
                                                 <%
                                                         if config['nma_priority'] == x:	
@@ -865,19 +1005,22 @@
                                                         else:
                                                                 nma_priority_value = 'Emergency'
                                                 %>
-                                <option value=${x} ${nma_priority_selected}>${nma_priority_value}</option>
+                                            <option value=${x} ${nma_priority_selected}>${nma_priority_value}</option>
                                         %endfor
                                 </select>
-                                </div>
+                            </div>
+                            <div class="row">
+                                    <input type="button" value="Test NMA" id="nma_test" />
+                            </div>
                         </div>
                      </fieldset>
                                         
                                         <fieldset>
-                                                 <h3><img src="interfaces/default/images/pushover_logo.png" style="vertical-align: middle; margin: 3px; margin-top: -1px;" height="30" width="30"/>Pushover</h3>
-                                                 <div class="row checkbox">
-                                                    <input type="checkbox" name="pushover_enabled" id="pushover" value="1" ${config['pushover_enabled']} /><label>Enable Pushover Notifications</label>
-                                                 </div>
-                                                 <div id="pushoveroptions">
+                                             <h3><img src="interfaces/default/images/pushover_logo.png" style="vertical-align: middle; margin: 3px; margin-top: -1px;" height="30" width="30"/>Pushover</h3>
+                                             <div class="row checkbox">
+                                                 <input type="checkbox" name="pushover_enabled" id="pushover" value="1" ${config['pushover_enabled']} /><label>Enable Pushover Notifications</label>
+                                             </div>
+                                             <div id="pushoveroptions">
                                                    <div class="row">
                                                        <label>API key</label><input type="text" title="Leave blank if you don't have your own API (recommended to get your own)" name="pushover_apikey" value="${config['pushover_apikey']}" size="50">
                                                    </div>
@@ -891,7 +1034,10 @@
                                                        <label>Priority (-2,-1,0,1 or 2):</label>
                                                        <input type="text" name="pushover_priority" value="${config['pushover_priority']}" size="2">
                                                    </div>
-                                                 </div>
+                                                   <div class="row">
+                                                        <input type="button" value="Test Pushover" id="pushover_test" />
+                                                   </div>
+                                             </div>
                                         </fieldset>            
                      <fieldset>
                         <h3><img src="interfaces/default/images/boxcar_logo.png" style="vertical-align: middle; margin: 3px; margin-top: -1px;" height="30" width="30"/>Boxcar.IO</h3>
@@ -905,6 +1051,9 @@
                                     </div>
                                     <label>Boxcar Token</label>
                                     <input type="text" name="boxcar_token" value="${config['boxcar_token']}" size="30">
+                                    <div class="row">
+                                        <input type="button" value="Test Boxcar" id="boxcar_test" />
+                                   </div>
                             </div>
                         </div>
                      </fieldset>
@@ -919,14 +1068,18 @@
                                     </div>
                                     <div class="row">
                                         <label>API Key</label><input type="text" name="pushbullet_apikey" value="${config['pushbullet_apikey']}" size="50">
+                                        <small>Warning: Will send to ALL your pushbullet devices</small>
                                     </div>
                                     <div class="row">
-                                        <label>Device ID</label><input type="text" name="pushbullet_deviceid" value="${config['pushbullet_deviceid']}" size="50">
-<!--                                    <label>Pushbullet device list</label>
+<!--                                    <label>Device ID</label><input type="text" name="pushbullet_deviceid" value="${config['pushbullet_deviceid']}" size="50">
+                                        <label>Pushbullet device list</label>
                                         <select name="pushbullet_device_list" id="pushbullet_device_list"></select>
                                         <input type="hidden" id="pushbullet_deviceid" value="${config['pushbullet_deviceid']}" />
                                         <input type="button" class="btn" value="Update device list" id="getPushbulletDevices" />
 -->
+                                    </div>
+                                    <div class="row">
+                                         <input type="button" value="Test Pushbullet" id="pushbullet_test" />
                                     </div>
                                 </div>
                             </fieldset>
@@ -945,26 +1098,6 @@
 
 <%def name="javascriptIncludes()">
 	<script>
-
-	hideServerDivs = function () {
-		$("#customoptions").slideUp();
-		$("#hpserveroptions").slideUp();
-	};
-
-	handleNewSelection = function () {
-	
-		hideServerDivs();
-		
-		switch ($(this).val()) {
-			case 'custom':
-				$("#customoptions").slideDown();
-			break;
-			case 'mylar':
-				$("#hpserveroptions").slideDown();
-			break;
-		}
-	};
-	
 	function initThisPage() 
 	
 	{
@@ -986,6 +1119,26 @@
                         else
                         {
                                 $("#apioptions").slideUp();
+                        }
+                });
+
+                if ($("#cbr2cbz").is(":checked"))
+                        {
+                                $("#metataggingoptions").hide();
+                        }
+                else
+                        {
+                                $("#metataggingoptions").show();
+                        }
+
+                $("#cbr2cbz").click(function(){
+                        if ($("#cbr2cbz").is(":checked"))
+                        {
+                                $("#metataggingoptions").slideUp();
+                        }
+                        else
+                        {
+                                $("#metataggingoptions").slideDown();
                         }
                 });
 
@@ -1087,7 +1240,29 @@
                         {
                                 $("#pushbulletoptions").slideUp();
                         }
-                
+                });
+
+                if ($("#legacymode_32p").is(":checked"))
+                        {
+                                $("#auth32p_options").hide();
+                                $("#legacy32p_options").show();
+                        }
+                else
+                        {
+                                $("#legacy32p_options").hide();
+                                $("#auth32p_options").show();
+                        }
+
+                $('input[type=radio]').change(function(){
+                        if ($("#legacymode_32p").is(":checked"))
+                        {
+                                $("#auth32p_options").fadeOut("fast", function() { $("#legacy32p_options").fadeIn() });
+                        }
+                        else
+                        {
+                                $("#legacy32p_options").fadeOut("fast", function() { $("#auth32p_options").fadeIn() });
+                        }
+                });
 
                 if ($("#nzb_downloader_sabnzbd").is(":checked"))
                         {
@@ -1104,7 +1279,6 @@
                                 $("#sabnzbd_options,#nzbget_options").hide();
                                 $("#blackhole_options").show();
                         }
-                });
 
                 $('input[type=radio]').change(function(){
                         if ($("#nzb_downloader_sabnzbd").is(":checked"))
@@ -1139,7 +1313,24 @@
                             $('#api_key').val(data);
                     });
                 });
-
+                if ($("#enable_https").is(":checked"))
+                        {
+                            $("#https_options").show();
+                        }
+                else
+                        {
+                            $("#https_options").hide();
+                        }
+                $("#enable_https").click(function(){
+                        if ($("#enable_https").is(":checked"))
+                        {
+                            $("#https_options").slideDown();
+                        }
+                        else
+                        {
+                            $("#https_options").slideUp();
+                        }
+                });
                 $('#sab_apikey').click(function(){ $('#sab_apikey').select() });
                 $("#find_sabapi").click(function(){
                     $.get('findsabAPI',
@@ -1154,7 +1345,7 @@
 
                 $("#add_newznab").click(function() {
                     var intId = $("#newznab_providers > div").size() + deletedNewznabs + 1;
-                    var formfields = $("<div class=\"config\" id=\"newznab" + intId + "\"><div class=\"row\"><label>Newznab Name</label><input type=\"text\" name=\"newznab_name" + intId + "\" size=\"36\"></div><div class=\"row\"><label>Newznab Host</label><input type=\"text\" name=\"newznab_host" + intId + "\" + value=\"http://\" + size=\"30\"></div><div class=\"row\"><label>Newznab API</label><input type=\"text\" name=\"newznab_api" + intId + "\" size=\"36\"></div><div class=\"row\"><label>Newznab UID</label><input type=\"text\" name=\"newznab_uid" + intId + "\" size=\"15\"></div><div class=\"row checkbox\"><input type=\"checkbox\" name=\"newznab_enabled" + intId + "\" value=\"1\" checked /><label>Enabled</label></div>");
+                    var formfields = $("<div class=\"config\" id=\"newznab" + intId + "\"><div class=\"row\"><label>Newznab Name</label><input type=\"text\" name=\"newznab_name" + intId + "\" size=\"36\"></div><div class=\"row\"><label>Newznab Host</label><input type=\"text\" name=\"newznab_host" + intId + "\" + value=\"http://\" + size=\"30\"></div><div class=\"row checkbox\"><input type=\"checkbox\" name=\"newznab_verify" + intId + "\" value=\"0\" checked /><label>Verify SSL</label></div><div class=\"row\"><label>Newznab API</label><input type=\"text\" name=\"newznab_api" + intId + "\" size=\"36\"></div><div class=\"row\"><label>Newznab UID</label><input type=\"text\" name=\"newznab_uid" + intId + "\" size=\"15\"></div><div class=\"row checkbox\"><input type=\"checkbox\" name=\"newznab_enabled" + intId + "\" value=\"1\" checked /><label>Enabled</label></div>");
                     var removeButton = $("<div class=\"row\"><input type=\"button\" class=\"remove\" value=\"Remove\" /></div>");
                     removeButton.click(function() {
                         $(this).parent().remove();
@@ -1169,27 +1360,60 @@
                         $('#autoadd').append('<input type="hidden" name="tsab" value=1 />');
                 };
 
+                $('#nma_test').click(function () {
+                    $.get("testNMA",
+                        function (data) { $('#ajaxMsg').html("<div class='msg'><span class='ui-icon ui-icon-check'></span>"+data+"</div>"); });
+                    $('#ajaxMsg').addClass('success').fadeIn().delay(3000).fadeOut();
+                });
+
+                $('#prowl_test').click(function () {
+                    $.get("testprowl",
+                        function (data) { $('#ajaxMsg').html("<div class='msg'><span class='ui-icon ui-icon-check'></span>"+data+"</div>"); });
+                    $('#ajaxMsg').addClass('success').fadeIn().delay(3000).fadeOut();
+                });
+
+                $('#pushover_test').click(function () {
+                    $.get("testpushover",
+                        function (data) { $('#ajaxMsg').html("<div class='msg'><span class='ui-icon ui-icon-check'></span>"+data+"</div>"); });
+                    $('#ajaxMsg').addClass('success').fadeIn().delay(3000).fadeOut();
+                });
+
+                $('#boxcar_test').click(function () {
+                    $.get("testboxcar",
+                        function (data) { $('#ajaxMsg').html("<div class='msg'><span class='ui-icon ui-icon-check'></span>"+data+"</div>"); });
+                    $('#ajaxMsg').addClass('success').fadeIn().delay(3000).fadeOut();
+                });
+
+                $('#pushbullet_test').click(function () {
+                    $.get("testpushbullet",
+                        function (data) { $('#ajaxMsg').html("<div class='msg'><span class='ui-icon ui-icon-check'></span>"+data+"</div>"); });
+                    $('#ajaxMsg').addClass('success').fadeIn().delay(3000).fadeOut();
+                });
 
 		$(function() {
 			$( "#tabs" ).tabs();
 		});
 		initActions();
                 initConfigCheckbox("#launch_browser");
+                initConfigCheckbox("#enable_https");
                 initConfigCheckbox("#enable_api");
+                initConfigCheckbox("#sab_to_mylar");
                 initConfigCheckbox("#usenewznab");
+                initConfigCheckbox("#enable_torznab");
 		initConfigCheckbox("#usenzbsu");
                 initConfigCheckbox("#usedognzb");
                 initConfigCheckbox("#enable_torrents");
                 initConfigCheckbox("#torrent_local");
                 initConfigCheckbox("#torrent_seedbox");
                 initConfigCheckbox("#enable_torrent_search");
-                initConfigCheckbox("#enable_cbt");
+                initConfigCheckbox("#enable_32p");
                 initConfigCheckbox("#enable_rss");
 		initConfigCheckbox("#useexperimental");
 		initConfigCheckbox("#useraw");
                 initConfigCheckbox("#replace_spaces");
                 initConfigCheckbox("#use_minsize");
                 initConfigCheckbox("#use_maxsize");
+                initConfigCheckbox("#enable_ddump");
                 initConfigCheckbox("#enable_failed");
                 initConfigCheckbox("#enable_meta");
                 initConfigCheckbox("#zero_level");
